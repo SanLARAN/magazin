@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Минималистичный магазин</title>
+<script src="https://cdn.tailwindcss.com/3.4.16"></script>
+<script>tailwind.config={theme:{extend:{colors:{primary:'#000000',secondary:'#333333'},borderRadius:{'none':'0px','sm':'4px',DEFAULT:'8px','md':'12px','lg':'16px','xl':'20px','2xl':'24px','3xl':'32px','full':'9999px','button':'8px'}}}}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+<style>
+:where([class^="ri-"])::before { content: "\f3c2"; }
+body {
+font-family: 'Inter', sans-serif;
+background-color: #0f0f0f;
+color: #ffffff;
+}
+.like-btn.active i::before {
+content: "\f319";
+color: #ff4b4b;
+}
+.like-btn.active {
+color: #ff4b4b;
+}
+.like-animation {
+animation: likeAnimation 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes likeAnimation {
+0% { transform: scale(1); }
+50% { transform: scale(1.4); }
+100% { transform: scale(1); }
+}
+.product-card:hover {
+transform: translateY(-5px);
+box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+.cart-animation {
+transition: all 0.3s ease;
+}
+.cart-panel {
+transform: translateX(100%);
+transition: transform 0.3s ease-in-out;
+}
+.cart-panel.open {
+transform: translateX(0);
+}
+.cart-overlay {
+opacity: 0;
+visibility: hidden;
+transition: opacity 0.3s ease-in-out;
+}
+.cart-overlay.open {
+opacity: 1;
+visibility: visible;
+}
+.zoom-container {
+position: relative;
+overflow: hidden;
+}
+.zoom-image {
+transition: transform 0.3s ease;
+}
+.zoom-container:hover .zoom-image {
+transform: scale(1.1);
+}
+.image-gallery-thumbnail {
+cursor: pointer;
+opacity: 0.6;
+transition: opacity 0.3s ease;
+}
+.image-gallery-thumbnail.active, .image-gallery-thumbnail:hover {
+opacity: 1;
+}
+.modal {
+opacity: 0;
+visibility: hidden;
+transition: opacity 0.3s ease;
+}
+.modal.open {
+opacity: 1;
+visibility: visible;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+-webkit-appearance: none;
+margin: 0;
+}
+input[type="number"] {
+-moz-appearance: textfield;
+}
+.filter-button {
+position: relative;
+display: flex;
+align-items: center;
+gap: 0.75rem;
+width: 100%;
+padding: 0.75rem 1rem;
+background: rgba(255, 255, 255, 0.05);
+border-radius: 8px;
+cursor: pointer;
+transition: all 0.3s ease;
+overflow: hidden;
+}
+.filter-button:hover {
+background: rgba(255, 255, 255, 0.1);
+}
+.filter-button.active {
+background: rgba(255, 255, 255, 0.15);
+}
+.filter-button.active::before {
+content: '';
+position: absolute;
+left: 0;
+top: 0;
+width: 4px;
+height: 100%;
+background: #fff;
+border-radius: 0 2px 2px 0;
+}
+.filter-button i {
+font-size: 1.25rem;
+opacity: 0.7;
+transition: opacity 0.3s ease;
+}
+.filter-button.active i {
+opacity: 1;
+}
+.filter-button span {
+font-weight: 500;
+opacity: 0.7;
+transition: opacity 0.3s ease;
+}
+.filter-button.active span {
+opacity: 1;
+}
+.filter-button .count {
+margin-left: auto;
+padding: 0.25rem 0.75rem;
+background: rgba(255, 255, 255, 0.1);
+border-radius: 999px;
+font-size: 0.875rem;
+transition: all 0.3s ease;
+}
+.filter-button:hover .count,
+.filter-button.active .count {
+background: rgba(255, 255, 255, 0.2);
+}
+.custom-switch {
+position: relative;
+display: inline-block;
+width: 50px;
+height: 24px;
+background: #333;
+border-radius: 12px;
+cursor: pointer;
+}
+.custom-switch:after {
+content: '';
+position: absolute;
+top: 2px;
+left: 2px;
+width: 20px;
+height: 20px;
+background: #fff;
+border-radius: 50%;
+transition: transform 0.3s ease;
+}
+.custom-switch.checked:after {
+transform: translateX(26px);
+}
+.tab-content {
+display: none;
+}
+.tab-content.active {
+display: block;
+}
+.add-to-cart-animation {
+position: absolute;
+width: 20px;
+height: 20px;
+background-color: #fff;
+border-radius: 50%;
+pointer-events: none;
+z-index: 9999;
+opacity: 0;
+}
+</style>
+</head>
+<body class="min-h-screen">
+<!-- Header -->
+<header class="bg-primary sticky top-0 z-50">
+<div class="container mx-auto px-4 py-4 flex items-center justify-between">
+<a href="index.html" class="text-2xl font-['Pacifico'] text-white">logo</a>
+<div class="hidden md:flex items-center space-x-6 flex-1 justify-center">
+<div class="relative w-full max-w-md">
+<input type="text" placeholder="Поиск товаров..." class="w-full bg-secondary text-white px-4 py-2 rounded border-none focus:outline-none focus:ring-2 focus:ring-white/30">
+<button class="absolute right-3 top-1/2 transform -translate-y-1/2 w-6 h-6 flex items-center justify-center text-white">
+<i class="ri-search-line"></i>
+</button>
+</div>
+</div>
+<div class="flex items-center space-x-4">
+<button id="cartToggle" class="relative w-10 h-10 flex items-center justify-center text-white">
+<i class="ri-shopping-cart-line text-xl"></i>
+<span id="cartCount" class="absolute -top-1 -right-1 bg-white text-primary text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">0</span>
+</button>
+<button id="telegramLoginBtn" class="bg-[#0088cc] text-white px-4 py-2 rounded-button flex items-center space-x-2 whitespace-nowrap">
+<i class="ri-telegram-fill"></i>
+<span>Войти</span>
+</button>
+</div>
+</div>
+<!-- Mobile Search Bar -->
+<div class="md:hidden px-4 pb-4">
+<div class="relative w-full">
+<input type="text" placeholder="Поиск товаров..." class="w-full bg-secondary text-white px-4 py-2 rounded border-none focus:outline-none focus:ring-2 focus:ring-white/30">
+<button class="absolute right-3 top-1/2 transform -translate-y-1/2 w-6 h-6 flex items-center justify-center text-white">
+<i class="ri-search-line"></i>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="container mx-auto px-4 py-8">
+<!-- Category Filter -->
+<div class="flex flex-col md:flex-row gap-8">
+<div class="w-full md:w-64 shrink-0">
+<div class="bg-secondary rounded-lg p-4 sticky top-24">
+<h3 class="text-lg font-semibold mb-4">Категории</h3>
+<div class="space-y-2">
+<button class="filter-button active" data-category="all">
+<i class="ri-apps-line"></i>
+<span>Все товары</span>
+<span class="count">24</span>
+</button>
+<button class="filter-button" data-category="electronics">
+<i class="ri-computer-line"></i>
+<span>Электроника</span>
+<span class="count">8</span>
+</button>
+<button class="filter-button" data-category="clothing">
+<i class="ri-t-shirt-line"></i>
+<span>Одежда</span>
+<span class="count">6</span>
+</button>
+<button class="filter-button" data-category="accessories">
+<i class="ri-watch-line"></i>
+<span>Аксессуары</span>
+<span class="count">5</span>
+</button>
+<button class="filter-button" data-category="home">
+<i class="ri-home-line"></i>
+<span>Для дома</span>
+<span class="count">5</span>
+</button>
+</div>
+<h3 class="text-lg font-semibold mt-6 mb-4">Цена</h3>
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<input type="number" placeholder="От" class="w-[45%] bg-[#222] text-white px-3 py-2 rounded border-none focus:outline-none focus:ring-2 focus:ring-white/30 text-sm">
+<span>-</span>
+<input type="number" placeholder="До" class="w-[45%] bg-[#222] text-white px-3 py-2 rounded border-none focus:outline-none focus:ring-2 focus:ring-white/30 text-sm">
+</div>
+<button class="w-full bg-white text-primary font-medium py-2 rounded-button whitespace-nowrap">Применить</button>
+</div>
+<h3 class="text-lg font-semibold mt-6 mb-4">Сортировка</h3>
+<div class="space-y-2">
+<button class="filter-button active" data-sort="popular">
+<i class="ri-fire-line"></i>
+<span>Популярные</span>
+</button>
+<button class="filter-button" data-sort="new">
+<i class="ri-star-line"></i>
+<span>Новинки</span>
+</button>
+<button class="filter-button" data-sort="price-asc">
+<i class="ri-sort-asc"></i>
+<span>Сначала дешевые</span>
+</button>
+<button class="filter-button" data-sort="price-desc">
+<i class="ri-sort-desc"></i>
+<span>Сначала дорогие</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Products Grid -->
+<div class="flex-1">
+<h2 class="text-2xl font-bold mb-6">Популярные товары</h2>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Product Card 1 -->
+<div class="product-card bg-secondary rounded-lg overflow-hidden transition-all duration-300" data-category="electronics" data-price="12990" data-popularity="95" data-date="2025-05-01">
+<div class="relative">
+<div class="zoom-container h-64">
+<img src="https://readdy.ai/api/search-image?query=modern%20minimalist%20wireless%20black%20headphones%20on%20simple%20background%2C%20product%20photography%2C%20high%20quality%2C%20centered%20object%2C%20clean%20background&width=600&height=600&seq=1&orientation=squarish" alt="Беспроводные наушники" class="zoom-image w-full h-full object-cover object-top">
+</div>
+<button class="like-btn absolute top-3 right-3 w-8 h-8 bg-black/50 backdrop-blur rounded-full flex items-center justify-center text-white/70 hover:text-white transition-colors">
+<i class="ri-heart-line"></i>
+</button>
+<div class="absolute top-3 left-3 flex gap-2">
+<span class="bg-red-500 text-white text-xs px-2 py-1 rounded">-35%</span>
+<span class="bg-black/50 backdrop-blur text-white text-xs px-2 py-1 rounded">Хит продаж</span>
+</div>
+</div>
+<div class="p-4">
+<h3 class="text-lg font-semibold mb-2">Беспроводные наушники XSound Pro</h3>
+<div class="flex items-end gap-2 mb-3">
+<span class="text-xl font-bold">12 990 ₽</span>
+<span class="text-sm text-white/50 line-through">19 990 ₽</span>
+</div>
+<div class="flex gap-2">
+<button class="buy-now-btn flex-1 bg-white text-primary py-2 rounded-button font-medium whitespace-nowrap">Купить сейчас</button>
+<button class="add-to-cart-btn bg-white text-primary p-2 rounded-full w-10 h-10 flex items-center justify-center">
+<i class="ri-shopping-cart-line"></i>
+</button>
+</div>
+</div>
+</div>
+<!-- Product Card 2 -->
+<a href="product.html" class="product-card bg-secondary rounded-lg overflow-hidden transition-all duration-300">
+<div class="zoom-container h-64">
+<img src="https://readdy.ai/api/search-image?query=modern%20minimalist%20black%20smartwatch%20on%20simple%20background%2C%20product%20photography%2C%20high%20quality%2C%20centered%20object%2C%20clean%20background&width=600&height=600&seq=2&orientation=squarish" alt="Умные часы" class="zoom-image w-full h-full object-cover object-top">
+</div>
+<div class="p-4">
+<h3 class="text-lg font-semibold mb-2">Умные часы SmartLife X1</h3>
+<div class="flex justify-between items-center">
+<span class="text-xl font-bold">8 490 ₽</span>
+<button class="add-to-cart-btn bg-white text-primary p-2 rounded-full w-10 h-10 flex items-center justify-center">
+<i class="ri-shopping-cart-line"></i>
+</button>
+</div>
+</div>
+</a>
+<!-- Product Card 3 -->
+<a href="product.html" class="product-card bg-secondary rounded-lg overflow-hidden transition-all duration-300">
+<div class="zoom-container h-64">
+<img src="https://readdy.ai/api/search-image?query=modern%20minimalist%20black%20wireless%20speaker%20on%20simple%20background%2C%20product%20photography%2C%20high%20quality%2C%20centered%20object%2C%20clean%20background&width=600&height=600&seq=3&orientation=squarish" alt="Беспроводная колонка" class="zoom-image w-full h-full object-cover object-top">
+</div>
+<div class="p-4">
+<h3 class="text-lg font-semibold mb-2">Беспроводная колонка SoundBox Mini</h3>
+<div class="flex justify-between items-center">
+<span class="text-xl font-bold">5 990 ₽</span>
+<button class="add-to-cart-btn bg-white text-primary p-2 rounded-full w-10 h-10 flex items-center justify-center">
+<i class="ri-shopping-cart-line"></i>
+</button>
+</div>
+</div>
+</a>
+<!-- Product Card 4 -->
+<a href="product.html" class="product-card bg-secondary rounded-lg overflow-hidden transition-all duration-300">
+<div class="zoom-container h-64">
+<img src="https://readdy.ai/api/search-image?query=modern%20minimalist%20black%20leather%20wallet%20on%20simple%20background%2C%20product%20photography%2C%20high%20quality%2C%20centered%20object%2C%20clean%20background&width=600&height=600&seq=4&orientation=squarish" alt="Кожаный кошелек" class="zoom-image w-full h-full object-cover object-top">
+</div>
+<div class="p-4">
+<h3 class="text-lg font-semibold mb-2">Кожаный кошелек Classic</h3>
+<div class="flex justify-between items-center">
+<span class="text-xl font-bold">2 490 ₽</span>
+<button class="add-to-cart-btn bg-white text-primary p-2 rounded-full w-10 h-10 flex items-center justify-center">
+<i class="ri-shopping-cart-line"></i>
+</button>
+</div>
+</div>
+</a>
+<!-- Product Card 5 -->
+<a href="product.html" class="product-card bg-secondary rounded-lg overflow-hidden transition-all duration-300">
+<div class="zoom-container h-64">
+<img src="https://readdy.ai/api/search-image?query=modern%20minimalist%20black%20backpack%20on%20simple%20background%2C%20product%20photography%2C%20high%20quality%2C%20centered%20object%2C%20clean%20background&width=600&height=600&seq=5&orientation=squarish" alt="Рюкзак" class="zoom-image w-full h-full object-cover object-top">
+</div>
+<div class="p-4">
+<h3 class="text-lg font-semibold mb-2">Рюкзак Urban Explorer</h3>
+<div class="flex justify-between items-center">
+<span class="text-xl font-bold">4 990 ₽</span>
+<button class="add-to-cart-btn bg-white text-primary p-2 rounded-full w-10 h-10 flex items-center justify-center">
+<i class="ri-shopping-cart-line"></i>
+</button>
+</div>
+</div>
+</a>
+<!-- Product Card 6 -->
+<a href="product.html" class="product-card bg-secondary rounded-lg overflow-hidden transition-all duration-300">
+<div class="zoom-container h-64">
+<img src="https://readdy.ai/api/search-image?query=modern%20minimalist%20black%20wireless%20earbuds%20on%20simple%20background%2C%20product%20photography%2C%20high%20quality%2C%20centered%20object%2C%20clean%20background&width=600&height=600&seq=6&orientation=squarish" alt="Беспроводные наушники" class="zoom-image w-full h-full object-cover object-top">
+</div>
+<div class="p-4">
+<h3 class="text-lg font-semibold mb-2">Беспроводные наушники AirBuds 2</h3>
+<div class="flex justify-between items-center">
+<span class="text-xl font-bold">6 990 ₽</span>
+<button class="add-to-cart-btn bg-white text-primary p-2 rounded-full w-10 h-10 flex items-center justify-center">
+<i class="ri-shopping-cart-line"></i>
+</button>
+</div>
+</div>
+</a>
+</div>
+<!-- Load More Button -->
+<div class="mt-8 text-center">
+<button class="bg-white text-primary px-6 py-3 rounded-button font-medium whitespace-nowrap">Загрузить еще</button>
+</div>
+</div>
+</div>
+</main>
+<!-- Cart Sidebar -->
+<div id="cartOverlay" class="cart-overlay fixed inset-0 bg-black/50 z-50">
+<div id="cartPanel" class="cart-panel fixed top-0 right-0 h-full w-full sm:w-96 bg-secondary z-50 shadow-lg">
+<div class="flex flex-col h-full">
+<div class="p-4 border-b border-white/10 flex justify-between items-center">
+<h2 class="text-xl font-semibold">Корзина</h2>
+<button id="closeCart" class="w-8 h-8 flex items-center justify-center">
+<i class="ri-close-line text-xl"></i>
+</button>
+</div>
+<div id="cartItems" class="flex-1 overflow-y-auto p-4 space-y-4">
+<!-- Empty Cart Message -->
+<div id="emptyCart" class="text-center py-8">
+<div class="w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+<i class="ri-shopping-cart-line text-4xl text-white/50"></i>
+</div>
+<p class="text-white/70">Ваша корзина пуста</p>
+</div>
+<!-- Cart Item Template (Hidden) -->
+<div id="cartItemTemplate" class="hidden bg-[#222] rounded p-3 flex items-center gap-3">
+<img src="" alt="" class="w-16 h-16 object-cover object-top rounded">
+<div class="flex-1">
+<h4 class="font-medium"></h4>
+<div class="flex items-center justify-between mt-2">
+<div class="flex items-center border border-white/20 rounded">
+<button class="cart-decrease w-8 h-8 flex items-center justify-center">
+<i class="ri-subtract-line"></i>
+</button>
+<span class="cart-quantity w-8 text-center"></span>
+<button class="cart-increase w-8 h-8 flex items-center justify-center">
+<i class="ri-add-line"></i>
+</button>
+</div>
+<span class="cart-price font-semibold"></span>
+</div>
+</div>
+<button class="cart-remove w-8 h-8 flex items-center justify-center text-white/70 hover:text-white">
+<i class="ri-delete-bin-line"></i>
+</button>
+</div>
+</div>
+<div class="p-4 border-t border-white/10">
+<div class="flex justify-between mb-4">
+<span class="text-lg">Итого:</span>
+<span id="cartTotal" class="text-lg font-bold">0 ₽</span>
+</div>
+<button id="checkoutBtn" class="w-full bg-white text-primary py-3 rounded-button font-medium whitespace-nowrap">Оформить заказ</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer -->
+<footer class="bg-primary mt-12 py-8">
+<div class="container mx-auto px-4">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<div>
+<h3 class="text-xl font-semibold mb-4">О магазине</h3>
+<p class="text-white/70 mb-4">Минималистичный онлайн-магазин с современным дизайном и удобным интерфейсом. Мы предлагаем качественные товары по доступным ценам.</p>
+<div class="flex space-x-4">
+<a href="#" class="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20">
+<i class="ri-telegram-fill"></i>
+</a>
+<a href="#" class="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20">
+<i class="ri-instagram-line"></i>
+</a>
+<a href="#" class="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20">
+<i class="ri-vk-fill"></i>
+</a>
+</div>
+</div>
+<div>
+<h3 class="text-xl font-semibold mb-4">Информация</h3>
+<ul class="space-y-2">
+<li><a href="#" class="text-white/70 hover:text-white">Доставка и оплата</a></li>
+<li><a href="#" class="text-white/70 hover:text-white">Возврат и обмен</a></li>
+<li><a href="#" class="text-white/70 hover:text-white">Политика конфиденциальности</a></li>
+<li><a href="#" class="text-white/70 hover:text-white">Пользовательское соглашение</a></li>
+<li><a href="#" class="text-white/70 hover:text-white">Контакты</a></li>
+</ul>
+</div>
+<div>
+<h3 class="text-xl font-semibold mb-4">Контакты</h3>
+<ul class="space-y-2">
+<li class="flex items-center space-x-2">
+<i class="ri-phone-line"></i>
+<span>+7 (999) 123-45-67</span>
+</li>
+<li class="flex items-center space-x-2">
+<i class="ri-mail-line"></i>
+<span>info@minimalist-shop.ru</span>
+</li>
+<li class="flex items-center space-x-2">
+<i class="ri-map-pin-line"></i>
+<span>г. Москва, ул. Примерная, д. 123</span>
+</li>
+</ul>
+<div class="mt-4">
+<h4 class="font-medium mb-2">Способы оплаты:</h4>
+<div class="flex space-x-3">
+<i class="ri-visa-line text-2xl"></i>
+<i class="ri-mastercard-line text-2xl"></i>
+<i class="ri-bank-card-line text-2xl"></i>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-8 pt-4 border-t border-white/10 text-center text-white/50">
+<p>© 2025 Минималистичный магазин. Все права защищены.</p>
+</div>
+</div>
+</footer>
+<!-- Scripts -->
+<script id="cartScript">
+document.addEventListener('DOMContentLoaded', function() {
+const cartToggle = document.getElementById('cartToggle');
+const closeCart = document.getElementById('closeCart');
+const cartOverlay = document.getElementById('cartOverlay');
+const cartPanel = document.getElementById('cartPanel');
+
+function buyNow(productData) {
+const { name, price, image } = productData;
+cart = [{
+name,
+price,
+image,
+quantity: 1
+}];
+saveCart();
+updateCartUI();
+cartOverlay.classList.add('open');
+cartPanel.classList.add('open');
+}
+
+document.querySelectorAll('.like-btn').forEach(button => {
+button.addEventListener('click', (e) => {
+e.preventDefault();
+e.stopPropagation();
+button.classList.toggle('active');
+button.classList.add('like-animation');
+setTimeout(() => button.classList.remove('like-animation'), 500);
+});
+});
+
+document.querySelectorAll('.buy-now-btn').forEach(button => {
+button.addEventListener('click', (e) => {
+e.preventDefault();
+e.stopPropagation();
+const productCard = button.closest('.product-card');
+const productData = {
+name: productCard.querySelector('h3').textContent,
+price: parseInt(productCard.querySelector('.text-xl').textContent.replace(/\s/g, '')),
+image: productCard.querySelector('img').src
+};
+buyNow(productData);
+});
+});
+const cartItems = document.getElementById('cartItems');
+const cartItemTemplate = document.getElementById('cartItemTemplate');
+const emptyCart = document.getElementById('emptyCart');
+const cartCount = document.getElementById('cartCount');
+const cartTotal = document.getElementById('cartTotal');
+const checkoutBtn = document.getElementById('checkoutBtn');
+const addToCartBtns = document.querySelectorAll('.add-to-cart-btn');
+let cart = [];
+// Initialize cart from localStorage
+function initCart() {
+const savedCart = localStorage.getItem('cart');
+if (savedCart) {
+cart = JSON.parse(savedCart);
+updateCartUI();
+}
+}
+// Save cart to localStorage
+function saveCart() {
+localStorage.setItem('cart', JSON.stringify(cart));
+}
+// Update cart UI
+function updateCartUI() {
+// Update cart count
+cartCount.textContent = cart.reduce((total, item) => total + item.quantity, 0);
+// Clear cart items
+while (cartItems.firstChild) {
+if (cartItems.firstChild.id === 'cartItemTemplate' || cartItems.firstChild.id === 'emptyCart') {
+cartItems.firstChild.style.display = 'none';
+} else {
+cartItems.removeChild(cartItems.firstChild);
+}
+}
+// Show empty cart message if cart is empty
+if (cart.length === 0) {
+emptyCart.style.display = 'block';
+cartTotal.textContent = '0 ₽';
+return;
+}
+// Hide empty cart message
+emptyCart.style.display = 'none';
+// Add cart items
+let total = 0;
+cart.forEach((item, index) => {
+const cartItem = cartItemTemplate.cloneNode(true);
+cartItem.id = '';
+cartItem.style.display = 'flex';
+const img = cartItem.querySelector('img');
+img.src = item.image;
+img.alt = item.name;
+cartItem.querySelector('h4').textContent = item.name;
+cartItem.querySelector('.cart-quantity').textContent = item.quantity;
+cartItem.querySelector('.cart-price').textContent = `${(item.price * item.quantity).toLocaleString('ru-RU')} ₽`;
+const decreaseBtn = cartItem.querySelector('.cart-decrease');
+decreaseBtn.addEventListener('click', () => {
+if (item.quantity > 1) {
+item.quantity--;
+saveCart();
+updateCartUI();
+} else {
+cart.splice(index, 1);
+saveCart();
+updateCartUI();
+}
+});
+const increaseBtn = cartItem.querySelector('.cart-increase');
+increaseBtn.addEventListener('click', () => {
+item.quantity++;
+saveCart();
+updateCartUI();
+});
+const removeBtn = cartItem.querySelector('.cart-remove');
+removeBtn.addEventListener('click', () => {
+cart.splice(index, 1);
+saveCart();
+updateCartUI();
+});
+cartItems.appendChild(cartItem);
+total += item.price * item.quantity;
+});
+// Update total
+cartTotal.textContent = `${total.toLocaleString('ru-RU')} ₽`;
+}
+// Add to cart animation
+function addToCartAnimation(button) {
+const rect = button.getBoundingClientRect();
+const cartRect = cartToggle.getBoundingClientRect();
+const circle = document.createElement('div');
+circle.classList.add('add-to-cart-animation');
+circle.style.top = `${rect.top + rect.height / 2}px`;
+circle.style.left = `${rect.left + rect.width / 2}px`;
+document.body.appendChild(circle);
+setTimeout(() => {
+circle.style.transition = 'all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+circle.style.top = `${cartRect.top + cartRect.height / 2}px`;
+circle.style.left = `${cartRect.left + cartRect.width / 2}px`;
+circle.style.opacity = '1';
+setTimeout(() => {
+circle.style.opacity = '0';
+circle.style.transform = 'scale(0.5)';
+setTimeout(() => {
+document.body.removeChild(circle);
+}, 300);
+}, 500);
+}, 0);
+}
+// Add event listeners
+cartToggle.addEventListener('click', () => {
+cartOverlay.classList.add('open');
+cartPanel.classList.add('open');
+});
+closeCart.addEventListener('click', () => {
+cartOverlay.classList.remove('open');
+cartPanel.classList.remove('open');
+});
+cartOverlay.addEventListener('click', (e) => {
+if (e.target === cartOverlay) {
+cartOverlay.classList.remove('open');
+cartPanel.classList.remove('open');
+}
+});
+addToCartBtns.forEach(button => {
+button.addEventListener('click', (e) => {
+e.preventDefault();
+e.stopPropagation();
+const productCard = button.closest('.product-card');
+const productName = productCard.querySelector('h3').textContent;
+const productPrice = parseInt(productCard.querySelector('span').textContent.replace(/\s/g, ''));
+const productImage = productCard.querySelector('img').src;
+// Check if product is already in cart
+const existingItem = cart.find(item => item.name === productName);
+if (existingItem) {
+existingItem.quantity++;
+} else {
+cart.push({
+name: productName,
+price: productPrice,
+image: productImage,
+quantity: 1
+});
+}
+saveCart();
+updateCartUI();
+addToCartAnimation(button);
+});
+});
+checkoutBtn.addEventListener('click', () => {
+if (cart.length === 0) {
+alert('Ваша корзина пуста');
+return;
+}
+alert('Переход к оформлению заказа');
+});
+// Initialize cart
+initCart();
+});
+</script>
+<script id="filterScript">
+document.addEventListener('DOMContentLoaded', function() {
+const filterButtons = document.querySelectorAll('.filter-button');
+const productCards = document.querySelectorAll('.product-card');
+const priceMinInput = document.querySelector('input[placeholder="От"]');
+const priceMaxInput = document.querySelector('input[placeholder="До"]');
+const applyPriceButton = document.querySelector('button.w-full.bg-white');
+let currentCategory = 'all';
+let currentSort = 'popular';
+
+function filterByPrice() {
+const minPrice = parseInt(priceMinInput.value) || 0;
+const maxPrice = parseInt(priceMaxInput.value) || Infinity;
+
+productCards.forEach(card => {
+const price = parseInt(card.dataset.price || 0);
+if (price >= minPrice && price <= maxPrice) {
+if (currentCategory === 'all' || card.dataset.category === currentCategory) {
+card.style.display = '';
+card.style.opacity = '1';
+card.style.transform = 'translateY(0)';
+} else {
+card.style.display = 'none';
+}
+} else {
+card.style.display = 'none';
+}
+});
+}
+
+applyPriceButton.addEventListener('click', filterByPrice);
+function filterProducts() {
+productCards.forEach(card => {
+const cardCategory = card.dataset.category || 'all';
+if (currentCategory === 'all' || cardCategory === currentCategory) {
+card.style.display = '';
+card.style.opacity = '1';
+card.style.transform = 'translateY(0)';
+} else {
+card.style.opacity = '0';
+card.style.transform = 'translateY(20px)';
+setTimeout(() => {
+card.style.display = 'none';
+}, 300);
+}
+});
+}
+function sortProducts() {
+const cards = Array.from(productCards);
+const container = cards[0].parentElement;
+switch(currentSort) {
+case 'popular':
+cards.sort((a, b) => parseInt(b.dataset.popularity || 0) - parseInt(a.dataset.popularity || 0));
+break;
+case 'new':
+cards.sort((a, b) => new Date(b.dataset.date || 0) - new Date(a.dataset.date || 0));
+break;
+case 'price-asc':
+cards.sort((a, b) => parseInt(a.dataset.price || 0) - parseInt(b.dataset.price || 0));
+break;
+case 'price-desc':
+cards.sort((a, b) => parseInt(b.dataset.price || 0) - parseInt(a.dataset.price || 0));
+break;
+}
+cards.forEach((card, index) => {
+card.style.transition = 'transform 0.3s ease';
+card.style.transform = 'scale(0.95)';
+setTimeout(() => {
+container.appendChild(card);
+requestAnimationFrame(() => {
+card.style.transform = 'scale(1)';
+});
+}, index * 50);
+});
+}
+filterButtons.forEach(button => {
+button.addEventListener('click', function() {
+const category = this.dataset.category;
+const sort = this.dataset.sort;
+const buttonType = category ? 'category' : 'sort';
+document.querySelectorAll(`.filter-button[data-${buttonType}]`).forEach(btn => {
+btn.classList.remove('active');
+});
+this.classList.add('active');
+if (category) {
+currentCategory = category;
+filterProducts();
+}
+if (sort) {
+currentSort = sort;
+sortProducts();
+}
+button.style.transform = 'scale(0.95)';
+setTimeout(() => {
+button.style.transform = 'scale(1)';
+}, 150);
+});
+});
+filterProducts();
+sortProducts();
+});
+</script>
+</body>
+</html>
